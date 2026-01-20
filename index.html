@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eğitim Portalı Pro</title>
+    <style>
+        :root { --ana-renk: #3498db; --oyun-renk: #9b59b6; --cizim-renk: #f1c40f; --basari: #2ecc71; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f3f5; margin: 0; display: flex; justify-content: center; padding: 15px; }
+        .container { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 480px; text-align: center; }
+        .gizli { display: none; }
+        button { background: var(--ana-renk); color: white; border: none; padding: 15px; margin: 10px 0; border-radius: 15px; cursor: pointer; font-size: 16px; width: 100%; font-weight: bold; transition: all 0.2s; }
+        button:active { transform: scale(0.95); }
+        .sinav-kutu { background: #fffbe6; border: 1.5px dashed #f1c40f; padding: 12px; margin-bottom: 10px; border-radius: 10px; font-size: 14px; text-align: left; }
+        .soru-metni { font-size: 22px; margin: 30px 0; min-height: 50px; color: #34495e; font-weight: 600; }
+        .cevap-btn { background: #fff !important; color: #333 !important; border: 2px solid #ddd !important; }
+    </style>
+</head>
+<body>
+
+    <div id="ekran-giris" class="container">
+        <h1>Hoş Geldin! 🎓</h1>
+        <div class="sinav-kutu">
+            📌 <b>LGS 2026:</b> 7 Haziran 2026<br>
+            📌 <b>YKS 2026:</b> 13-14 Haziran 2026<br>
+            📌 <b>KPSS 2026:</b> Temmuz/Ağustos 2026
+        </div>
+        
+        <button onclick="window.open('https://wordwall.net/tr-tr/community/ingilizce/oyun', '_blank')" style="background: var(--oyun-renk);">🎮 İngilizce Oyunlar (Wordwall)</button>
+        
+        <button onclick="window.open('https://quickdraw.withgoogle.com/', '_blank')" style="background: var(--cizim-renk); color: #333;">🎨 Quick Draw (Çizim Oyunu)</button>
+        
+        <button onclick="ekranDegistir('ekran-giris', 'ekran-siniflar')">Ders Çalışmaya Başla 🚀</button>
+    </div>
+
+    <div id="ekran-siniflar" class="container gizli">
+        <h2>Sınıfını Seç</h2>
+        <button onclick="sinifSec(5)" style="background:#2ecc71">5. Sınıf</button>
+        <button onclick="sinifSec(6)" style="background:#f39c12">6. Sınıf</button>
+        <button onclick="sinifSec(7)" style="background:#e91e63">7. Sınıf</button>
+        <button onclick="sinifSec(8)" style="background:#9b59b6">8. Sınıf (LGS)</button>
+        <button onclick="ekranDegistir('ekran-siniflar', 'ekran-giris')" style="background:#95a5a6">Geri</button>
+    </div>
+
+    <div id="ekran-oyun" class="container gizli">
+        <div id="puan-alani" style="font-weight:bold; color:var(--ana-renk)">Puan: <span id="puan">0</span></div>
+        <div class="soru-metni" id="soru-metni">Soru yükleniyor...</div>
+        <div id="secenekler"></div>
+        <button onclick="ekranDegistir('ekran-oyun', 'ekran-siniflar')" style="background:#95a5a6; margin-top:20px;">Çıkış</button>
+    </div>
+
+    <script>
+        let puan = 0;
+        let seciliSinif = 5;
+        const dogruSes = new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3');
+        const yanlisSes = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
+
+        const sorular = {
+            5: [
+                {s: "Nice to meet you!", c: "Glad to meet you", a: ["I'm 10", "Glad to meet you", "Fine, thanks"]},
+                {s: "Where is the library?", c: "Next to the cafe", a: ["Blue", "Next to the cafe", "12 o'clock"]},
+                {s: "I'm from Turkey. I'm ___.", c: "Turkish", a: ["English", "Turkish", "Italian"]},
+                {s: "Science, Maths, English are...", c: "School subjects", a: ["Hobbies", "Countries", "School subjects"]}
+            ],
+            6: [
+                {s: "What do you have for breakfast?", c: "Olives and cheese", a: ["Play football", "Olives and cheese", "Go to school"]},
+                {s: "Yummy!", c: "Delicious", a: ["Delicious", "Horrible", "Early"]}
+            ],
+            7: [
+                {s: "She is very generous. She ___.", c: "buys presents", a: ["buys presents", "tells lies", "is late"]},
+                {s: "Punctual means...", c: "On time", a: ["Funny", "Lazy", "On time"]}
+            ],
+            8: [
+                {s: "A true friend always ___ you.", c: "backs up", a: ["argues with", "backs up", "lies to"]},
+                {s: "Counting on someone means...", c: "trusting", a: ["trusting", "hating", "meeting"]}
+            ]
+        };
+
+        function ekranDegistir(eski, yeni) {
+            document.getElementById(eski).classList.add('gizli');
+            document.getElementById(yeni).classList.remove('gizli');
+        }
+
+        function sinifSec(s) {
+            seciliSinif = s;
+            ekranDegistir('ekran-siniflar', 'ekran-oyun');
+            soruGetir();
+        }
+
+        function titre(durum) {
+            if (window.navigator && window.navigator.vibrate) {
+                durum === 'ok' ? navigator.vibrate(100) : navigator.vibrate([100, 50, 100]);
+            }
+        }
+
+        function soruGetir() {
+            const havuz = sorular[seciliSinif] || sorular[5];
+            const soru = havuz[Math.floor(Math.random() * havuz.length)];
+            document.getElementById('soru-metni').innerText = soru.s;
+            const alan = document.getElementById('secenekler');
+            alan.innerHTML = "";
+
+            const karisik = [...soru.a].sort(() => Math.random() - 0.5);
+            karisik.forEach(sik => {
+                const btn = document.createElement('button');
+                btn.className = "cevap-btn";
+                btn.innerText = sik;
+                btn.onclick = () => {
+                    if(sik === soru.c) {
+                        dogruSes.play(); titre('ok'); puan += 10;
+                        btn.style.borderColor = "#2ecc71";
+                        btn.style.backgroundColor = "#e8f5e9";
+                        setTimeout(soruGetir, 600);
+                    } else {
+                        yanlisSes.play(); titre('hata');
+                        btn.style.borderColor = "#e74c3c";
+                        btn.style.backgroundColor = "#ffebee";
+                    }
+                    document.getElementById('puan').innerText = puan;
+                };
+                alan.appendChild(btn);
+            });
+        }
+    </script>
+</body>
+</html>
